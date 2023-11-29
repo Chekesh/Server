@@ -5,14 +5,11 @@ import java.util.ArrayList;
 
 public class Request {
     private String Request;
-    private String password;
-    private String username;
 
-    //private ArrayList<String> list;
-    Request(String Request, String password, String username){
+    private ArrayList<String> ListAttributes;
+    Request(String Request, ArrayList<String> ListAttributes){
         this.Request = Request;
-        this.password = password;
-        this.username = username;
+        this.ListAttributes = ListAttributes;
     }
 
 }

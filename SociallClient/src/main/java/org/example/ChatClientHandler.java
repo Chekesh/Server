@@ -1,5 +1,6 @@
 package org.example;
 
+import com.google.gson.Gson;
 import org.snf4j.core.EndingAction;
 import org.snf4j.core.handler.AbstractStreamHandler;
 import org.snf4j.core.handler.SessionEvent;
@@ -9,15 +10,23 @@ import org.snf4j.core.session.IStreamSession;
 
 public class ChatClientHandler extends AbstractStreamHandler {
 
+    Gson gson = new Gson();
     //IStreamSession session;
 
     //Срабатывает при получении данных из потока
     @Override
     public void read(Object msg) {
-        String answer = new String((byte[]) msg);
-        //System.err.println(new String((byte[]) msg));
+        // получение ответа
+        String jsonStringRequest = new String((byte[]) msg);
 
+        // Сериализация в класс Request
+        Answer answer = gson.fromJson(jsonStringRequest, Answer.class);
 
+        //вывод ответа
+        System.err.println("Список");
+        for (String str: answer.getListAttributes()){
+            System.err.println(str);
+        }
     }
 
     // событие (закрытие сервера)
@@ -46,9 +55,9 @@ public class ChatClientHandler extends AbstractStreamHandler {
 
     public void send(Request request) {
         IStreamSession session = getSession();
-        //Gson gson = new Gson();
-        //String jsonString = gson.toJson(request);
-        //session.write(jsonString);
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(request);
+        session.write(jsonString);
 
     }
 }

@@ -3,11 +3,15 @@ package org.example;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.rmi.ConnectException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
+import com.google.gson.Gson;
 import org.snf4j.core.SelectorLoop;
 import org.snf4j.core.session.IStreamSession;
 
@@ -25,8 +29,11 @@ public class Main {
     //IStreamSession session;
 
 
-    public static void send(String masseg, IStreamSession session){
-        session.write(masseg.getBytes());
+    public static void send(Request request, IStreamSession session){
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(request);
+        //session.write(jsonString);
+        session.write(jsonString.getBytes());
     }
 
     public static void main(String[] args) throws Exception {
@@ -53,24 +60,32 @@ public class Main {
             // подтверждение успешно установленного потключения
             session.getReadyFuture().sync();
 
-            Request request = new Request("Сравнение", "1234", "ArtikDemonik");
+            ArrayList<String> org = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik"));
+            ArrayList<String> org_2 = new ArrayList<>(Arrays.asList("12345", "ArtikDemonik"));
+            ArrayList<String> org_3 = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik", "хер"));
+            Request request = new Request("Сравнение", org);
+            Request request_2 = new Request("Сравнение",org_2);
+            Request request_3 = new Request("Сравнение",org_3);
 
-            send("Хай", session);
+
+            // Чет нихера не понял
+            send(request, session);
+
+            // без ожидания не успевает(
+            loop.join(1000);
+            send(request_2, session);
+            //loop.join(2000);
+            send(request_3, session);
+
+            send(request_2, session);
+            send(request_3, session);
+
 
             //session.getAttributes().put(BYE_TYPED, BYE_TYPED);  //?????7
             loop.join();  //??????????
 
 
-
-            /*Gson gson = new Gson();
-            String jsonString = gson.toJson(dataObject);/*
-
-            // Выводим результат
-            System.out.println(jsonString);
-
-
-
-
+            //ОСТАВЛЮ НА СЛУЧАЙ ПРОВЕРКИ
 
             //читает строку с консоли
             /*BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -89,7 +104,8 @@ public class Main {
                     //конец цикла
                     break;
                 }
-            }*/
+            }
+            loop.join();*/
         }
         // Найти Exception сработающий на не подключение сервреа
         catch (Exception ex){
