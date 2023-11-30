@@ -44,7 +44,8 @@ public class Main {
 
             // Wait till the loop ends
             // ожидание конца потока
-            loop.join();
+            loop.
+                    join();
         }
         finally {
 

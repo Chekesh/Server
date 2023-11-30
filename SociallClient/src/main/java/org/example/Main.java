@@ -72,13 +72,13 @@ public class Main {
             send(request, session);
 
             // без ожидания не успевает(
-            loop.join(1000);
+            loop.join(5000);
             send(request_2, session);
             //loop.join(2000);
-            send(request_3, session);
+            /*send(request_3, session);
 
             send(request_2, session);
-            send(request_3, session);
+            send(request_3, session);*/
 
 
             //session.getAttributes().put(BYE_TYPED, BYE_TYPED);  //?????7

@@ -1,5 +1,7 @@
 package org.example;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 
 
@@ -14,6 +16,9 @@ public class ServerHandler extends AbstractStreamHandler {
 
     // Объект gson
     Gson gson = new Gson();
+
+    Database database = new Database();
+    Answer AnswerSer;
 
     //private static String YOUID = "[you]";
 
@@ -71,17 +76,31 @@ public class ServerHandler extends AbstractStreamHandler {
     public void comparison(Request request) {
         //Если всё совпало
         // Тут должно быть обращение к бд
-        Answer answer;
+
+        String answerbd = database.CheckUser(request.getListAttributes().get(1), request.getListAttributes().get(0));
+
+        AnswerSer = new Answer(new ArrayList<>(Arrays.asList(answerbd)));
+        /*if (request.getListAttributes().get(0).equals("1234") && request.getListAttributes().get(1).equals("ArtikDemonik")) {
+            answer = new Answer(new ArrayList<>(Arrays.asList("GOOD")));
+        } else {
+            answer = new Answer(new ArrayList<>(Arrays.asList("BADLY")));
+        }*/
+
+        answer(AnswerSer);
+
+
+
+        /*Answer answer;
         if (request.getListAttributes().get(0).equals("1234") && request.getListAttributes().get(1).equals("ArtikDemonik")) {
             answer = new Answer(new ArrayList<>(Arrays.asList("GOOD")));
         } else {
             answer = new Answer(new ArrayList<>(Arrays.asList("BADLY")));
         }
-        amswer(answer);
+        answer(answer);*/
     }
 
     // Отправка ответа
-    private void amswer(Answer answer) {
+    private void answer(Answer answer) {
         // создание json
         String jsonStringAnswer = gson.toJson(answer);
         // получение id сессии
