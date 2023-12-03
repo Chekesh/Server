@@ -10,6 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.rmi.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import org.snf4j.core.SelectorLoop;
@@ -18,10 +19,12 @@ import org.snf4j.core.session.IStreamSession;
 public class Main {
     static final String PREFIX = "org.snf4j.";
     static final String HOST = System.getProperty(PREFIX+"Host", "127.0.0.1");
-    static final int PORT = Integer.getInteger(PREFIX+"Port", 8002);
+    static final int PORT = Integer.getInteger(PREFIX+"Port", 8003);
     static final Integer BYE_TYPED = 0;
 
     public String answer;
+
+    static Gson gson = new Gson();
 
 
     //ChatClientHandler clien;
@@ -30,7 +33,6 @@ public class Main {
 
 
     public static void send(Request request, IStreamSession session){
-        Gson gson = new Gson();
         String jsonString = gson.toJson(request);
         //session.write(jsonString);
         session.write(jsonString.getBytes());
@@ -46,7 +48,7 @@ public class Main {
             // Initialize the connection
             // создание слушателя
             SocketChannel channel = SocketChannel.open();
-            // Запрет на принятие сразу несколько подключений (тобиш можно подключиться тока к 1 серверу)
+            // Запрет на принятие сразу несколько подключений (то биш можно подключиться тока к 1 серверу)
             channel.configureBlocking(false);
             //  подключение к серверу по адрессу и порту
             channel.connect(new InetSocketAddress(InetAddress.getByName(HOST), PORT));
@@ -60,9 +62,15 @@ public class Main {
             // подтверждение успешно установленного потключения
             session.getReadyFuture().sync();
 
-            ArrayList<String> org = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik"));
-            ArrayList<String> org_2 = new ArrayList<>(Arrays.asList("12345", "ArtikDemonik"));
-            ArrayList<String> org_3 = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik", "хер"));
+            //ArrayList<String> org = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik"));
+            Map<String,String> org = Map.of("Снилс", "ArtikDemonik", "Пороль", "1234");
+
+            //ArrayList<String> org_2 = new ArrayList<>(Arrays.asList("12345", "ArtikDemonik"));
+            Map<String,String> org_2 = Map.of("Снилс", "ArtikDemonik", "Пороль", "12345");
+
+            //ArrayList<String> org_3 = new ArrayList<>(Arrays.asList("1234", "ArtikDemonik", "хер"));
+            Map<String,String> org_3 = Map.of("Пороль", "1234","Снилс", "ArtikDemonik", "хз", "хер");
+
             Request request = new Request("Сравнение", org);
             Request request_2 = new Request("Сравнение",org_2);
             Request request_3 = new Request("Сравнение",org_3);
@@ -74,11 +82,11 @@ public class Main {
             // без ожидания не успевает(
             loop.join(5000);
             send(request_2, session);
-            //loop.join(2000);
-            /*send(request_3, session);
+            loop.join(2000);
+            send(request_3, session);
 
-            send(request_2, session);
-            send(request_3, session);*/
+            //send(request_2, session);
+            //send(request_3, session);*/
 
 
             //session.getAttributes().put(BYE_TYPED, BYE_TYPED);  //?????7

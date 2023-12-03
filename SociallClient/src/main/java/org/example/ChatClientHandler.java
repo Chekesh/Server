@@ -8,6 +8,8 @@ import org.snf4j.core.session.DefaultSessionConfig;
 import org.snf4j.core.session.ISessionConfig;
 import org.snf4j.core.session.IStreamSession;
 
+import java.util.Map;
+
 public class ChatClientHandler extends AbstractStreamHandler {
 
     Gson gson = new Gson();
@@ -23,9 +25,11 @@ public class ChatClientHandler extends AbstractStreamHandler {
         Answer answer = gson.fromJson(jsonStringRequest, Answer.class);
 
         //вывод ответа
-        System.err.println("Список");
-        for (String str: answer.getListAttributes()){
-            System.err.println(str);
+        //System.err.println("Список");
+
+        Map<String,String> map = answer.getMapAttributes();
+        for (String strok: map.keySet()){
+            System.err.println(strok + "   " +map.get(strok));
         }
     }
 

@@ -6,12 +6,16 @@ import java.util.Map;
 
 public class Request {
     private String Request;
-    private ArrayList<String> ListAttributes;
+    //private ArrayList<String> ListAttributes;
 
-    //private List<Map<String, String>> listMap;
+    private Map<String, String> MapAttributes;
 
-    public ArrayList<String> getListAttributes() {
+    /*public ArrayList<String> getListAttributes() {
         return ListAttributes;
+    }*/
+
+    public Map<String, String> getMapAttributes() {
+        return MapAttributes;
     }
 
     public String getRequest() {
