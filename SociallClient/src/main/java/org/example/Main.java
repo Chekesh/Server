@@ -35,7 +35,9 @@ public class Main {
     public static void send(Request request, IStreamSession session){
         String jsonString = gson.toJson(request);
         //session.write(jsonString);
-        session.write(jsonString.getBytes());
+        //session.write(jsonString.getBytes());
+
+        session.write("Гандон".getBytes());
     }
 
     public static void main(String[] args) throws Exception {

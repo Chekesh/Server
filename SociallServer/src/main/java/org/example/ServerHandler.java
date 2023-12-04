@@ -1,5 +1,6 @@
 package org.example;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -35,7 +36,7 @@ public class ServerHandler extends AbstractStreamHandler {
             }
 
             switch (request.getRequest()) {
-                case "Сравнение" -> comparison(request);
+                case "CheckUser" -> CheckUserRequest(request);
                 case "Проверка работника" -> EmployeeVerification(request);
                 case "Регистрация пользователя с хешированным паролем и солью" -> RegUserHashedAndSaltPass(request);
                 case "Регистрация работника с хешированным паролем и солью" -> RegWorkerHashedAndSaltPass(request);
@@ -54,10 +55,21 @@ public class ServerHandler extends AbstractStreamHandler {
                 case "Удаление организации" -> deleteSocialOrganizationRequest(request);
                 case "Удаление формы" -> deleteFormRequest(request);
                 case "Заявление удаление" -> deleteApplicationRequest(request);
+                case "UpdateWorkerProfile" -> UpdateWorkerProfileRequest(request);
+                case "UpdateUserProfile" -> UpdateUserProfileRequest(request);
+                case "UpdateDocument" -> UpdateDocumentRequest(request);
+                case "UpdateRegion" -> UpdateRegionRequest(request);
+                case "UpdateUserData" -> UpdateUserDataRequest(request);
+                case "UpdateUserDataAdd" -> UpdateUserDataAddRequest(request);
+                case "UpdateSocOrganization" -> UpdateSocOrganizationRequest(request);
+                case "UpdateForm" -> UpdateFormRequest(request);
+                case "UpdateApplication" -> UpdateApplicationRequest(request);
             }
-        } catch (Exception e) {
+        } catch (Exception e) {;
             System.out.println("не правильный формат запроса");
-            e.printStackTrace();
+            AnswerSer = new Answer(Map.of("Ответ", "не правильный формат запроса"));
+            answer(AnswerSer);
+            //e.printStackTrace();
         }
     }
 
@@ -71,6 +83,8 @@ public class ServerHandler extends AbstractStreamHandler {
             }
             case OPENED -> {
                 System.out.println(getSession().getId() + "{connected}" + getSession());
+                //answer(new Answer(Map.of("Ответ", "ты лох")));
+                //answer(new Answer(Map.of("Ответ", "Ровная мужитска строчка")));
             }
             case CLOSED -> {
                 System.out.println(getSession().getId() + "{disconnected}" + getSession());
@@ -78,7 +92,7 @@ public class ServerHandler extends AbstractStreamHandler {
         }
     }
 
-    public void comparison(Request request) {
+    public void CheckUserRequest(Request request) {
 
         // для варианта со строками
         //String answerbd = database.CheckUser(request.getListAttributes().get(1), request.getListAttributes().get(0));
@@ -117,6 +131,7 @@ public class ServerHandler extends AbstractStreamHandler {
         answer(AnswerSer);
     }
 
+    // Я не знаю как сработает переход в дату
     private void AddUserRequest(Request request) throws ParseException {
         String answerbd = database.addUser(request.getMapAttributes().get("Снилс"), request.getMapAttributes().get("документ имя"),
                 request.getMapAttributes().get("Документ телефон"), request.getMapAttributes().get("Имя"), request.getMapAttributes().get("Фамилия"),
@@ -154,8 +169,8 @@ public class ServerHandler extends AbstractStreamHandler {
 
 
     private void NewSocOrganizathion(Request request) {
-        String answerbd = database.addSocOrganization(Integer.parseInt(request.getMapAttributes().get("Организация")),
-                request.getMapAttributes().get("Имя"));
+        String answerbd = database.addSocOrganization(Integer.parseInt(request.getMapAttributes().get("ID Организации")),
+                request.getMapAttributes().get("Название"));
         AnswerSer = new Answer(Map.of("Ответ", answerbd));
 
         answer(AnswerSer);
@@ -234,6 +249,84 @@ public class ServerHandler extends AbstractStreamHandler {
         answer(AnswerSer);
     }
 
+    private void UpdateWorkerProfileRequest(Request request) {
+        String answerbd = database.updateWorkerProfile(Integer.parseInt(request.getMapAttributes().get("ID")), request.getMapAttributes().get("Login"),
+                request.getMapAttributes().get("Password"), request.getMapAttributes().get("Name"), request.getMapAttributes().get("Surname"),
+                request.getMapAttributes().get("Patronymic"),request.getMapAttributes().get("Post"), Integer.valueOf(request.getMapAttributes().get("Admin")));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateUserProfileRequest(Request request) {
+        String answerbd = database.updateUserProfile(request.getMapAttributes().get("Snils"), request.getMapAttributes().get("Phone"),
+                request.getMapAttributes().get("Password"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateDocumentRequest(Request request) {
+        String answerbd = database.updateDocument(request.getMapAttributes().get("Name"), request.getMapAttributes().get("NewRegex"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+
+    private void UpdateRegionRequest(Request request) {
+        String answerbd = database.updateRegion(Integer.parseInt(request.getMapAttributes().get("ID")), request.getMapAttributes().get("Name"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+
+    private void UpdateUserDataRequest(Request request) throws ParseException {
+        String answerbd = database.updateUserData(request.getMapAttributes().get("Snils"), request.getMapAttributes().get("DocumentName"),
+                request.getMapAttributes().get("DocumentNumber"), request.getMapAttributes().get("Name"), request.getMapAttributes().get("Surname"),
+                request.getMapAttributes().get("Patronymic"), (Date) dateFormat.parse(request.getMapAttributes().get("Birthdate")),
+                request.getMapAttributes().get("Phone"), request.getMapAttributes().get("Email"), Integer.valueOf(request.getMapAttributes().get("RegionId")),
+                request.getMapAttributes().get("RegionSmall"), request.getMapAttributes().get("City"), request.getMapAttributes().get("Street"),
+                request.getMapAttributes().get("Home"), request.getMapAttributes().get("Apartment"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateUserDataAddRequest(Request request) {
+        String answerbd = database.updateUserDataAdd(Integer.valueOf(request.getMapAttributes().get("ID")), request.getMapAttributes().get("DocumentName"),
+                request.getMapAttributes().get("DocumentNumber"), request.getMapAttributes().get("Name"), Integer.valueOf(request.getMapAttributes().get("AddressRegionId")),
+                request.getMapAttributes().get("AddressSmallRegion"), request.getMapAttributes().get("AddressCity"),
+                request.getMapAttributes().get("AddressStreet"), request.getMapAttributes().get("AddressHome"), Integer.valueOf(request.getMapAttributes().get("AddressApartment")));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateSocOrganizationRequest(Request request) {
+        String answerbd = database.updateSocOrganization(Integer.parseInt(request.getMapAttributes().get("ID")), request.getMapAttributes().get("NewName"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateFormRequest(Request request) {
+        String answerbd = database.updateForm(request.getMapAttributes().get("CurrentName"), request.getMapAttributes().get("NewName"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+    private void UpdateApplicationRequest(Request request) {
+        String answerbd = database.updateApplication(Integer.valueOf(request.getMapAttributes().get("ID")), request.getMapAttributes().get("UserDataSnils"),
+                Integer.valueOf(request.getMapAttributes().get("UserDataAddId")), Integer.valueOf(request.getMapAttributes().get("WorkerProfileId")),
+                Integer.valueOf(request.getMapAttributes().get("SocOrganizationOgrrn")), request.getMapAttributes().get("Form"),
+                request.getMapAttributes().get("Reason"), Boolean.parseBoolean(request.getMapAttributes().get("Domestic")),
+                Boolean.parseBoolean(request.getMapAttributes().get("Medical")), Boolean.parseBoolean(request.getMapAttributes().get("Psychological")),
+                Boolean.parseBoolean(request.getMapAttributes().get("Pedagogical")), Boolean.parseBoolean(request.getMapAttributes().get("labour")),
+                Boolean.parseBoolean(request.getMapAttributes().get("legal")), Boolean.parseBoolean(request.getMapAttributes().get("Communication")),
+                Boolean.parseBoolean(request.getMapAttributes().get("Urgent")), request.getMapAttributes().get("Famaly"),
+                request.getMapAttributes().get("Living"), Integer.valueOf(request.getMapAttributes().get("Income")),
+                request.getMapAttributes().get("Status"));
+        AnswerSer = new Answer(Map.of("Ответ", answerbd));
+        answer(AnswerSer);
+    }
+
+
+
 
 
 
@@ -249,7 +342,7 @@ public class ServerHandler extends AbstractStreamHandler {
     // Отправка ответа
     private void answer(Answer answer) {
         String jsonStringAnswer = gson.toJson(answer);
-        getSession().write(("%s".formatted(jsonStringAnswer)).getBytes());
+        getSession().write(("%s\n".formatted(jsonStringAnswer)).getBytes(StandardCharsets.UTF_8));
 
     }
 }
