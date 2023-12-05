@@ -8,10 +8,8 @@ public class Database {
     protected String dbHost = "localhost";
     protected String dbPort = "3306";
     protected String dbUser = "root";
-    protected String dbPass = "1234";//"MA58sh62.";
+    protected String dbPass = "1234";
     protected String dbName = "socservices";
-
-    String answerbd = null;
     Connection dbConnection;
     {
         try {
@@ -23,93 +21,48 @@ public class Database {
         }
     }
 
-    String request;
-
-    /*Database(){
-        try {
-            dbConnection = getDbConnection();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }*/
-
     public Connection getDbConnection()
             throws ClassNotFoundException, SQLException {
         String connectionString = "jdbc:mysql://" + dbHost + ":"
                 + dbPort + "/" + dbName;
         Class.forName("com.mysql.cj.jdbc.Driver");
         dbConnection = DriverManager.getConnection(connectionString, dbUser, dbPass);
-        System.out.println("Все заебок");
         return dbConnection;
     }
-
-    /*public String CheckUser(String snils, String salt_password) {
-        request = "SELECT * FROM user_profile WHERE snils = ? AND salt_password = ?";
-        try {
-            PreparedStatement prSt = dbConnection.prepareStatement(request);
-            prSt.setString(1, snils);
-            prSt.setString(2, salt_password);
-            ResultSet resultSet = prSt.executeQuery();
-            int schet = 0;
-            while (resultSet.next()) {
-                answerbd =  "OK";
-                schet = 1;
-            }
-            if (schet == 0) {
-                answerbd = "BADLY";
-            }
-            else if (schet > 1){
-                answerbd = "Вы что ебланы как получилось 2 или больше одинаковых?";
-            }
-            return answerbd;
-
-        } catch (SQLException e) {
-            System.out.println("ошибка ");
-            throw new RuntimeException(e);
-        }
-    }*/
-
-    //немножка переписала метод сверху, добавила проверку
-    //Чет не работает
-    public String CheckUser(String snils, String enteredPassword) {
-        request = "SELECT hashed_password, salt_password FROM user_profile WHERE snils = ?";
+    public String checkUser(String snils, String enteredPassword) {
+        String request = "SELECT hashed_password, salt_password FROM user_profile WHERE snils = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, snils);
             ResultSet resultSet = prSt.executeQuery();
 
             int schet = 0;
-            String answerbd = null;
 
             while (resultSet.next()) {
                 String hashedPasswordFromDB = resultSet.getString("hashed_password");
                 String saltFromDB = resultSet.getString("salt_password");
 
-                // Проверка пароля
                 if (BCrypt.checkpw(enteredPassword, hashedPasswordFromDB)) {
-                    answerbd = "OK";
+                    answerbd = "1";
                     schet++;
                 }
             }
-
             if (schet == 0) {
-                answerbd = "BADLY";
-            } else if (schet > 1) {
-                answerbd = "Вы что ебланы как получилось 2 или больше одинаковых?"; //главное не забыть убрать
+                answerbd = "0";
             }
-
-            return answerbd;
-
         } catch (SQLException e) {
-            System.out.println("ошибка");
+            answerbd = "0";
             throw new RuntimeException(e);
         }
+        finally {
+            return answerbd;
+        }
     }
-    //проверка работника
+
     public String checkWorkerCredentials(String login, String password) {
-        request = "SELECT hashed_password, salt_password FROM worker_profile WHERE login = ?";
+        String request = "SELECT hashed_password, salt_password FROM worker_profile WHERE login = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, login);
@@ -118,26 +71,26 @@ public class Database {
                 String hashedPasswordFromDB = resultSet.getString("hashed_password");
                 String saltFromDB = resultSet.getString("salt_password");
 
-                // Проверка пароля
                 if (BCrypt.checkpw(password, hashedPasswordFromDB)) {
-                    answerbd = "OK";
+                    answerbd = "1";
                 }
                 else {
-                    answerbd = "BADLY";
+                    answerbd = "0";
                 }
             }
-            return answerbd;
         } catch (SQLException e) {
-            answerbd = "Ошибка при проверке учетных данных работника.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
+        }finally {
+            return answerbd;
         }
     }
-    //метод для регистрации пользователя с хешированным паролем и солью
+
     public String registerUser(String snils, String phone, String plainPassword) {
         String salt = BCrypt.gensalt();
         String hashedPassword = BCrypt.hashpw(plainPassword, salt);
-        request = "INSERT INTO user_profile (snils, phone, hashed_password, salt_password) VALUES (?, ?, ?, ?)";
+        String request = "INSERT INTO user_profile (snils, phone, hashed_password, salt_password) VALUES (?, ?, ?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, snils);
@@ -146,23 +99,22 @@ public class Database {
             prSt.setString(4, salt);
 
             prSt.executeUpdate();
-            answerbd = "Пользователь успешно зарегистрирован.";
-            System.out.println(answerbd);
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при регистрации пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //метод для регистрации работника с хешированным паролем и солью
+
     public String registerWorker(String login, String plainPassword, String name, String surname, String patronymic, String post, boolean isAdmin) {
         String salt = BCrypt.gensalt();
         String hashedPassword = BCrypt.hashpw(plainPassword, salt);
 
-        request = "INSERT INTO worker_profile (login, hashed_password, salt_password, name, surname, patronymic, post, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String request = "INSERT INTO worker_profile (login, hashed_password, salt_password, name, surname, patronymic, post, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, login);
@@ -175,26 +127,52 @@ public class Database {
             prSt.setBoolean(8, isAdmin);
 
             prSt.executeUpdate();
-            answerbd = "Работник успешно зарегистрирован.";
-            System.out.println(answerbd);
+            answerbd = "1";
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при регистрации работника.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //Я пока не разобралась что такое эдюзер и с чем его едят
+
+    public String mobileRegisterUser(String snils, String name, String surname, String patronymic,
+                                     String phone, String password){
+        String salt = BCrypt.gensalt();
+        String hashedPassword = BCrypt.hashpw(password, salt);
+        String request = "INSERT INTO user_profile (snils, phone, hashed_password, salt_password) VALUES (?, ?, ?, ?);"+    "INSERT INTO user_data (snils, name, surname, patronymic, phone) VALUES (?, ?, ?, ?)";
+        String answerbd = null;
+        try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
+            prSt.setString(1, snils);
+            prSt.setString(2, phone);
+            prSt.setString(3, hashedPassword);
+            prSt.setString(4, salt);
+            prSt.setString(5, snils);
+            prSt.setString(6, name);
+            prSt.setString(7, surname);
+            prSt.setString(8, patronymic);
+            prSt.setString(9, phone);
+            prSt.executeUpdate();
+            answerbd = "1";
+        } catch (SQLException e) {
+            answerbd= "0";
+            throw new RuntimeException(e);
+        }
+        finally {
+            return answerbd;
+        }
+    }
+
     public String addUser(String snils, String documentName, String documentNumber,
                           String name, String surname, String patronymic,
                           Date birthdate, String phone, String email, //?
                           int regionId, String regionSmall,
                           String city, String street, String home, String apartment) {
-        request = "INSERT INTO user_data (snils, document_name, document_number, name, surname, patronymic, brithdate, phone, email, region_id, region_small, city, street, home, apartment) " +
+        String request = "INSERT INTO user_data (snils, document_name, document_number, name, surname, patronymic, brithdate, phone, email, region_id, region_small, city, street, home, apartment) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, snils);
@@ -214,28 +192,26 @@ public class Database {
             prSt.setString(15, apartment);
 
             prSt.executeUpdate();
-            answerbd = "Пользователь успешно добавлен в таблицу user_data.";
-            System.out.println(answerbd);
-
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении пользователя в таблицу user_data.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //заявление?
+
     public String addApplication(String userSnils, Integer userAddId, Integer workerProfileId,
                                  int socOrganizationOgrrn, String form, String reason,
                                  boolean domestic, boolean medical, boolean psychological,
                                  boolean pedagogical, boolean labour, boolean legal,
                                  boolean communication, boolean urgent, String family,
                                  String living, int income, String status) {
-        request = "INSERT INTO application (user_data_snils, user_data_add_, worker_profile_id, soc_organization_ogrrn, form, reason, " +
+        String request = "INSERT INTO application (user_data_snils, user_data_add_, worker_profile_id, soc_organization_ogrrn, form, reason, " +
                 "domestic, medical, psychological, pedagogical, labour, legal, communication, urgent, famaly, living, income, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, userSnils);
@@ -258,101 +234,94 @@ public class Database {
             prSt.setString(18, status);
 
             prSt.executeUpdate();
-            System.out.println(answerbd);
-            answerbd = "Заявка успешно добавлена в таблицу ";
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении заявки в таблицу ";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //форма
+
     public String addForm(String name) {
-        request = "INSERT INTO form (name) VALUES (?)";
+        String request = "INSERT INTO form (name) VALUES (?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, name);
 
             prSt.executeUpdate();
-            answerbd = "Форма успешно добавлена в таблиц";
-            System.out.println(answerbd);
-
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении формы в таблицу";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    // Метод для добавления новой социальной организации
+
     public String addSocOrganization(int ogrrn, String name) {
-        request = "INSERT INTO soc_organization (ogrrn, name) VALUES (?, ?)";
+        String request = "INSERT INTO soc_organization (ogrrn, name) VALUES (?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, ogrrn);
             prSt.setString(2, name);
 
             prSt.executeUpdate();
-            answerbd = "Социальная организация успешно добавлена в таблицу";
-            System.out.println(answerbd);
-
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении социальной организации в таблицу";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    // Метод для добавления нового документа
+
     public String addDocument(String name, String regex) {
-        request = "INSERT INTO document (name, regex) VALUES (?, ?)";
+        String request = "INSERT INTO document (name, regex) VALUES (?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, name);
             prSt.setString(2, regex);
 
             prSt.executeUpdate();
-            answerbd = "Документ успешно добавлен в таблицу document.";
-            System.out.println(answerbd);
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении документа в таблицу document.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    // Метод для добавления нового региона
+
     public String addRegion(int id, String name) {
-        request = "INSERT INTO region (id, name) VALUES (?, ?)";
+        String request = "INSERT INTO region (id, name) VALUES (?, ?)";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, id);
             prSt.setString(2, name);
 
             prSt.executeUpdate();
-            answerbd = "Регион успешно добавлен в таблицу";
-            System.out.println(answerbd);
+            answerbd = "1";
         } catch (SQLException e) {
-            answerbd = "Ошибка при добавлении региона в таблицу";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление работника
+
     public String deleteWorker(int workerId) {
-        request = "DELETE FROM worker_profile WHERE id = ?";
+        String request = "DELETE FROM worker_profile WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, workerId);
@@ -360,51 +329,45 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Работник успешно удален.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Работник с указанным ID не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
-
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении работника.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление пользователя
+
     public String deleteUser(String snils) {
-        request = "DELETE FROM user_profile WHERE snils = ?";
+        String request = "DELETE FROM user_profile WHERE snils = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, snils);
-
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Пользователь успешно удален.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Пользователь с указанным СНИЛС не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление документа
+
     public String deleteDocument(String documentName) {
-        request = "DELETE FROM document WHERE name = ?";
+        String request = "DELETE FROM document WHERE name = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, documentName);
@@ -412,51 +375,46 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Документ успешно удален.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Документ с указанным именем не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении документа.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление региона
+
     public String deleteRegion(int regionId) {
         String request = "DELETE FROM region WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, regionId);
-
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Регион успешно удален.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Регион с указанным ID не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении региона.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление данных пользователя
+
     public String deleteUserData(String snils) {
         String request = "DELETE FROM user_data WHERE snils = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, snils);
@@ -464,25 +422,22 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Данные пользователя успешно удалены.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Пользователь с указанным СНИЛС не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
-
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении данных пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //
+
     public String deleteUserAdditionalData(int dataId) {
         String request = "DELETE FROM user_data_add WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, dataId);
@@ -490,25 +445,23 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Дополнительные данные пользователя успешно удалены.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Данные с указанным ID не найдены.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении дополнительных данных пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление организации
+
     public String deleteSocialOrganization(int ogrrn) {
         String request = "DELETE FROM soc_organization WHERE ogrrn = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, ogrrn);
@@ -516,25 +469,23 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Социальная организация успешно удалена.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Организация с указанным OGRRN не найдена.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении социальной организации.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //удаление формы
+
     public String deleteForm(String formName) {
         String request = "DELETE FROM form WHERE name = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, formName);
@@ -542,25 +493,23 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Форма успешно удалена.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Форма с указанным именем не найдена.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении формы.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
             return answerbd;
         }
     }
-    //заявление удаление
+
     public String deleteApplication(int applicationId) {
         String request = "DELETE FROM application WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setInt(1, applicationId);
@@ -568,16 +517,13 @@ public class Database {
             int rowsDeleted = prSt.executeUpdate();
 
             if (rowsDeleted > 0) {
-                answerbd = "Заявление успешно удалено.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Заявление с указанным ID не найдено.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при удалении заявления.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -589,6 +535,7 @@ public class Database {
         String salt = BCrypt.gensalt();
         String hashedPassword = BCrypt.hashpw(plainPassword, salt);
         String request = "UPDATE worker_profile SET login = ?, hashed_password = ?, salt_password = ?, name = ?, surname = ?, patronymic = ?, post = ?, admin = ? WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, login);
@@ -604,16 +551,13 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Профиль работника успешно обновлен.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Работник с указанным ID не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении профиля работника.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -625,6 +569,7 @@ public class Database {
         String salt = BCrypt.gensalt();
         String hashedPassword = BCrypt.hashpw(plainPassword, salt);
         String request = "UPDATE user_profile SET phone = ?, hashed_password = ?, salt_password = ? WHERE snils = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, phone);
@@ -635,16 +580,13 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Профиль пользователя успешно обновлен.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Пользователь с указанным СНИЛС не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении профиля пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -654,6 +596,7 @@ public class Database {
 
     public String updateDocument(String name, String newRegex) {
         String request = "UPDATE document SET regex = ? WHERE name = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, newRegex);
@@ -662,16 +605,12 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Документ успешно обновлен.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Документ с указанным именем не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
-
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении документа.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -681,6 +620,7 @@ public class Database {
 
     public String updateRegion(int id, String name) {
         String request = "UPDATE region SET name = ? WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, name);
@@ -689,16 +629,12 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Регион успешно обновлен.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Регион с указанным ID не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
-
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении региона.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -712,6 +648,7 @@ public class Database {
         String request = "UPDATE user_data SET document_name = ?, document_number = ?, name = ?, surname = ?, patronymic = ?, brithdate = ?, " +
                 "phone = ?, email = ?, region_id = ?, region_small = ?, city = ?, street = ?, home = ?, apartment = ? " +
                 "WHERE snils = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, documentName);
@@ -733,16 +670,12 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Данные пользователя успешно обновлены.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Пользователь с указанным СНИЛС не найден.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
-
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении данных пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -755,6 +688,7 @@ public class Database {
         String request = "UPDATE user_data_add SET document_name = ?, document_number = ?, name = ?, address_region_id = ?, " +
                 "address_small_region = ?, address_city = ?, address_street = ?, address_home = ?, address_apartment = ? " +
                 "WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, documentName);
@@ -771,16 +705,13 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Дополнительные данные пользователя успешно обновлены.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Данные с указанным ID не найдены.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении дополнительных данных пользователя.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -790,6 +721,7 @@ public class Database {
 
     public String updateSocOrganization(int ogrrn, String newName) {
         String request = "UPDATE soc_organization SET name = ? WHERE ogrrn = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, newName);
@@ -798,16 +730,38 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Социальная организация успешно обновлена.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Организация с указанным OGRRN не найдена.";
-                System.out.println(answerbd);
+                answerbd = "0";
+            }
+        } catch (SQLException e) {
+            answerbd = "0";
+            throw new RuntimeException(e);
+        }
+        finally {
+            return answerbd;
+        }
+    }
+
+
+    public String statusEditApplication(int id, int status) {
+        String request = "UPDATE application SET status = ? WHERE id = ?";
+        String answerbd = null;
+
+        try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
+            prSt.setInt(1, status);
+            prSt.setInt(19, id);
+
+            int rowsUpdated = prSt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                answerbd = "1";
+            } else {
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении социальной организации.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -817,6 +771,7 @@ public class Database {
 
     public String updateForm(String currentName, String newName) {
         String request = "UPDATE form SET name = ? WHERE name = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, newName);
@@ -825,16 +780,13 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Форма успешно обновлена.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Форма с указанным именем не найдена.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении формы.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -850,6 +802,7 @@ public class Database {
                 "soc_organization_ogrrn = ?, form = ?, reason = ?, domestic = ?, medical = ?, psychological = ?, " +
                 "pedagogical = ?, labour = ?, legal = ?, communication = ?, urgent = ?, famaly = ?, living = ?, " +
                 "income = ?, status = ? WHERE id = ?";
+        String answerbd = null;
 
         try (PreparedStatement prSt = dbConnection.prepareStatement(request)) {
             prSt.setString(1, userDataSnils);
@@ -875,16 +828,13 @@ public class Database {
             int rowsUpdated = prSt.executeUpdate();
 
             if (rowsUpdated > 0) {
-                answerbd = "Заявление успешно обновлено.";
-                System.out.println(answerbd);
+                answerbd = "1";
             } else {
-                answerbd = "Заявление с указанным ID не найдено.";
-                System.out.println(answerbd);
+                answerbd = "0";
             }
 
         } catch (SQLException e) {
-            answerbd = "Ошибка при обновлении заявления.";
-            System.out.println(answerbd);
+            answerbd = "0";
             throw new RuntimeException(e);
         }
         finally {
@@ -892,5 +842,3 @@ public class Database {
         }
     }
 }
-
-

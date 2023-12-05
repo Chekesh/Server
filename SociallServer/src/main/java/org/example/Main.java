@@ -30,10 +30,8 @@ public class Main {
                     ServerHandler haha = null;
                     try {
                         haha = new ServerHandler();
-                        System.out.println("Новый клиент");
                     }
                     catch (Exception e){
-                        System.out.println("нет подключения подключение");
                         e.printStackTrace();
                     }
                     return haha;
@@ -46,7 +44,6 @@ public class Main {
         finally {
             // Gently stop the loop
             loop.stop();
-            System.out.println("Сервер закрыт");
         }
     }
 }

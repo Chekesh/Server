@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class Answer {
-    //private ArrayList<String> ListAttributes;
     private Map<String, String> MapAttributes;
-    Answer(Map<String,String> MapAttributes){//, ArrayList<String> ListAttributes){
-        //this.ListAttributes = ListAttributes;
+    Answer(Map<String,String> MapAttributes){
         this.MapAttributes = MapAttributes;
     }
 }
